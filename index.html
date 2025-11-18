@@ -11,6 +11,9 @@
         :root {
             --primary-color: #10B981; /* Emerald */
             --secondary-color: #059669; /* Dark Emerald */
+            --warning-color: #F59E0B; /* Amber */
+            --step-color: #3B82F6; /* Blue */
+            --attention-color: #EF4444; /* Red */
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -31,15 +34,60 @@
             border-left: 5px solid var(--primary-color);
             transition: all 0.5s ease-in-out;
         }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .step-number {
+            flex-shrink: 0;
+            width: 2rem;
+            height: 2rem;
+            background-color: var(--step-color);
+            color: white;
+            border-radius: 9999px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+        /* 依頼先強調スタイル */
+        .office-attention {
+            background-color: #FEF2F2; /* Red 50 */
+            border-left: 5px solid var(--attention-color);
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: bold;
+            color: #B91C1C; /* Red 700 */
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen">
 
     <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-8">
+        <header class="text-center mb-6">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 border-b-4 border-emerald-500 pb-2 inline-block">天草市 随意契約 根拠条文 判定ナビ</h1>
-            <p class="mt-3 text-lg text-gray-600">ガイドライン（R7改訂）に基づき、契約根拠と手続きをサポートします。</p>
+            <!-- 契約原則の強調（表現を修正） -->
+            <p class="mt-3 text-lg font-bold text-gray-700">
+                本アプリは、一般競争入札の原則に対する<span class="text-red-600">例外規定（随意契約）</span>の<span class="underline">適正な判断と手続き</span>をサポートします。
+            </p>
         </header>
+
+        <!-- 注意喚起バナー -->
+        <div class="bg-amber-100 border-l-4 border-amber-500 p-4 mb-8 rounded-lg shadow-md">
+            <div class="flex items-center">
+                <!-- Warning Icon (Lucide-react equivalent: alert-triangle) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-amber-600 mr-3">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <p class="text-sm font-medium text-amber-800">
+                    **【基本原則】** 随意契約は地方自治法上、**一般競争入札の例外**です。適用にあたっては、根拠、理由、業者選定を明確に記録する必要があります。
+                </p>
+            </div>
+        </div>
 
         <!-- メインコンテンツグリッド -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -117,7 +165,19 @@
             <div id="resultOutput" class="bg-white p-6 sm:p-8 rounded-xl contract-card hidden result-box">
                 <h2 class="text-2xl font-bold mb-4 text-secondary-color">判定結果と手続き</h2>
                 
-                <div class="space-y-4">
+                <div class="space-y-6">
+                    <!-- 事務担当部署 -->
+                    <div id="officeSection">
+                        <p class="text-xs font-semibold uppercase text-gray-500">事務担当部署</p>
+                        <div id="resultOffice" class="office-attention text-base"></div>
+                    </div>
+
+                    <!-- 契約締結の形式 -->
+                    <div id="contractFormSection">
+                        <p class="text-xs font-semibold uppercase text-gray-500">契約締結の形式</p>
+                        <p id="resultContractForm" class="text-xl font-extrabold text-red-500"></p>
+                    </div>
+                    
                     <!-- 根拠条文 -->
                     <div>
                         <p class="text-xs font-semibold uppercase text-gray-500">随意契約の根拠条文</p>
@@ -137,9 +197,18 @@
                             <p id="note1"></p>
                             <p id="note2"></p>
                             <p id="note3"></p>
+                            <p id="note4"></p>
                         </div>
                     </div>
 
+                    <!-- 主管課における事務手順 -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <p class="text-xs font-semibold uppercase text-gray-500 mb-3">主管課における事務手順 (ガイドライン P.10 参照)</p>
+                        <div id="resultProcedure" class="space-y-2">
+                            <!-- 手順はJSで動的に挿入されます -->
+                        </div>
+                    </div>
+                    
                     <!-- 判定フロー補足 -->
                     <div class="pt-4 border-t border-gray-200">
                         <p class="text-xs font-semibold uppercase text-gray-500">判定フロー補足</p>
@@ -209,6 +278,70 @@
             },
         };
 
+        // 主管課における事務手順 (ガイドライン P.10)
+        const STANDARD_PROCEDURE = [
+            { step: '執行(施行)伺書の作成', detail: '物品契約管理システムへ登録し、システムから出力 (工事は除く)。随意契約を採用した理由、業者を選定した理由等を記入する。**原則「随意契約及び業者選定理由書」を作成添付**。仕様書、カタログ等を添付。' },
+            { step: '指名伺書の作成', detail: '業者へ通知書により見積依頼 (**原則として2者以上**)。指名業者に偏りが出ないよう考慮。見積期間は特別の場合を除き5日 (休日等を除く)が必要。' },
+            { step: '見積書の開札', detail: '2名以上 (立会い者含む) で開札し、記載事項の点検。開札調書を作成。' },
+            { step: '落札者の決定', detail: '開札後、見積書提出の全業者に結果を連絡。契約金額に応じた請書(案)または契約書(案)を作成。' },
+            { step: '契約の締結', detail: '落札決定後速やかに (概ね1週間以内) 契約締結。' }
+        ];
+
+        /**
+         * 契約検査課への依頼要否を判定する (ガイドラインP.11)
+         * @param {string} type 契約の種類 (1～6)
+         * @param {number} price 予定価格 (万円)
+         * @param {string} specialReason 特殊事由 (0, 2, 3, 5, 6, 7, 8, 9)
+         * @returns {string} 担当部署の文字列
+         */
+        function determineContractOffice(type, price, specialReason) {
+            // 例外規定: 契約の相手方が特定されるもの (1者随契) は、金額に関わらず契約検査課の対象外
+            // 相手方特定となるのは、第2号、第3号、第5号、第6号、または規則第14条第1項第2号等に該当する場合
+            // ここでは簡易的に、第2号、第3号、第5号、第6号が選択された場合を「特定されるもの」と見なす
+            const isOneParty = ['2', '3', '5', '6'].includes(specialReason);
+            
+            if (isOneParty) {
+                return '主管課';
+            }
+
+            switch (type) {
+                case '1': // 工事又は製造の請負
+                    // 印刷物は20万円超で契約検査課へ (他の工事や維持管理業務で競争入札が必要なものも対象)
+                    // ただし、ここでは印刷物を想定し、他の工事は一旦主管課で処理する前提で金額判定
+                    // 印刷物と判断される場合 (製造の請負)
+                    if (price > 20) {
+                        return '契約検査課 (競争入札が必要な案件)';
+                    }
+                    break;
+                case '2': // 財産の買入れ
+                    if (price > 20) {
+                        return '契約検査課';
+                    }
+                    break;
+                case '3': // 物件の借入れ (契約予定総額)
+                    if (price > 20) {
+                        return '契約検査課';
+                    }
+                    break;
+                case '4': // 財産の売払い
+                    // ガイドラインP.11に基準なし。P.3の随意契約上限50万円を超えないため、原則主管課。
+                    return '主管課';
+                case '5': // 物件の貸付け
+                    // ガイドラインP.11に基準なし。P.3の随意契約上限30万円を超えないため、原則主管課。
+                    return '主管課';
+                case '6': // 上記以外のもの (業務委託等)
+                    if (price > 50) {
+                        return '契約検査課';
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return '主管課'; // 上記の条件に当てはまらない場合は主管課で処理
+        }
+
+
         /**
          * 契約根拠を判定し、結果を出力する
          */
@@ -223,9 +356,13 @@
             const resultQuotation = document.getElementById('resultQuotation');
             const resultNotes = document.getElementById('resultNotes');
             const resultFlow = document.getElementById('resultFlow');
+            const resultContractForm = document.getElementById('resultContractForm');
+            const resultProcedure = document.getElementById('resultProcedure');
+            const resultOffice = document.getElementById('resultOffice');
             
             // 入力チェック
             if (!contractType || isNaN(priceMan) || priceMan < 0) {
+                // カスタムモーダルなどに変更を推奨
                 alert('契約の種類と予定価格を正しく入力してください。');
                 return;
             }
@@ -233,30 +370,49 @@
             let article = '';
             let quotationDetail = '';
             let notes = [];
-            let flowNote = '判定は、ガイドラインの「第1号優先適用」の原則に基づき行いました。';
+            let flowNote = '';
+            let contractFormDetail = ''; // 契約形式の情報を保持する変数
 
-            // 1. 少額随契 (第1号) の判定
+            // ------------------------------------------
+            // 1. 事務担当部署の判定
+            const office = determineContractOffice(contractType, priceMan, specialReason);
+            resultOffice.textContent = office === '主管課' ? '主管課で事務を行います' : `${office}へ依頼してください`;
+            resultOffice.classList.toggle('office-attention', office !== '主管課');
+            
+            // 2. 契約締結形式の判定ロジック (ガイドライン P.10 事務手順 (4) 参照)
+            if (priceMan > 50) {
+                contractFormDetail = '【契約書が必要】(50万円超)';
+                resultContractForm.className = 'text-xl font-extrabold text-red-500';
+                notes.push('**【契約締結形式】** 契約書が必要です。落札決定後速やかに契約書(案)を作成し、契約締結すること。');
+            } else if (priceMan > 20) {
+                contractFormDetail = '【請書が必要】(20万円超50万円以内)';
+                resultContractForm.className = 'text-xl font-extrabold text-orange-500';
+                notes.push('**【契約締結形式】** 請書(案)を作成し、契約締結すること。');
+            } else {
+                contractFormDetail = '【契約書・請書は原則不要】(20万円以下)';
+                resultContractForm.className = 'text-xl font-extrabold text-emerald-600';
+                notes.push('**【契約締結形式】** 契約書・請書は原則不要です。発注書や事務処理要領に基づき、適切に執行してください。');
+            }
+            // ------------------------------------------
+
+            
+            // 3. 随意契約の根拠条文判定
             const priceLimit = PRICE_LIMITS[contractType];
             const isMinorContract = priceMan <= priceLimit;
-            
-            // 2. 特殊事由の判定
             const isSpecialReason = specialReason !== '0';
             
             if (isMinorContract) {
                 // パターンA: 少額随契に該当する場合 (第1号優先適用)
-                article = `施行令第167条の2第1項第1号 (少額随契 - ${priceLimit}万円以下)`;
+                article = `施行令第167条の2第1項第1号 (少額随契 - 上限${priceLimit}万円)`;
                 
                 // 見積徴取の判定（規則第14条）
                 if (priceMan <= 10) {
-                    // 10万円以下は1者随契 (規則第14条第1項第3号)
-                    quotationDetail = '1者のみの徴取で足りる (規則第14条第1項第3号)';
+                    quotationDetail = '**1者のみの徴取で足りる** (規則第14条第1項第3号)';
                 } else if (specialReason === '7' || specialReason === '8' || specialReason === '9') {
-                    // 第7号、8号、9号が重なる場合、少額であっても競争性を確保する必要があるため、原則2者以上を強く推奨
-                    quotationDetail = '原則として2者以上の徴取が必要 (第7/8/9号事由が重なるため競争性を確保)';
-                    notes.push('【例外的な競争性の確保】第7号、8号、9号の事由が重なる場合、少額であっても時価や競争性を比較検討するため、原則として2者以上の見積徴取を強く推奨します。');
+                    quotationDetail = '原則として**2者以上**の徴取が必要 (特殊事由により競争性を確保)';
+                    notes.push('【競争性の確保】第7/8/9号事由が重なる場合、少額でも時価や競争性を比較検討するため、原則として2者以上の見積徴取を強く推奨します。');
                 } else {
-                    // それ以外は原則2者以上 (規則第14条)
-                    quotationDetail = '原則として2者以上の徴取が必要';
+                    quotationDetail = '原則として**2者以上**の徴取が必要';
                 }
 
                 // 予定価格調書 (規則第13条第2項第1号)
@@ -267,19 +423,18 @@
                 }
                 
                 // 随意契約及び業者選定理由書 (ガイドラインP.10)
-                if (priceMan <= priceLimit && priceMan > 10 && specialReason === '0' ) {
+                if (priceMan <= priceLimit && priceMan > 10 && specialReason === '0' && quotationDetail.includes('2者以上')) {
                     notes.push('見積予定業者が複数で、執行伺書に根拠条文と見積予定業者(複数者)の記載があれば、理由書の添付は**不要**です。');
                 } else if (isSpecialReason) {
                     notes.push('【特殊事由あり】第1号優先適用ですが、特殊事由が重なる場合は「随意契約及び業者選定理由書」を作成添付し、業者選定理由を明確にすること。');
                     if (specialReason === '3') {
                         notes.push('**【重要】第3号(福祉施設等)の公表手続きが必要です。**');
                     }
-                } else {
-                    // 10万円以下、または10万円超50万円以下で特殊事由がない場合
-                    notes.push('原則として2者以上の見積徴取が必要。執行伺書に根拠条文と見積予定業者を記載してください。');
+                } else if (priceMan <= 10) {
+                    notes.push('1者随契で処理する場合、業者選定理由等を執行伺書に記載してください。');
                 }
                 
-                flowNote += `（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円以下のため、第1号が優先適用されました。）`;
+                flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円以下）`;
 
             } else if (isSpecialReason) {
                 // パターンB: 少額随契を超え、かつ特殊事由に該当する場合 (第2号〜第9号)
@@ -288,42 +443,79 @@
                 
                 // 見積徴取の判定
                 if (detail.oneParty) {
-                    quotationDetail = '1者のみの徴取で足りる (規則第14条第1項による)';
-                    // 第2,3,5,6号は1者随契可だが、7,8,9号は不可。
+                    quotationDetail = '**1者のみの徴取で足りる** (規則第14条第1項による)';
                     if (specialReason === '5') {
                         notes.push('【緊急時】可能であれば複数の業者から見積を徴取するなど競争性を確保するよう心がけてください。');
                     }
                 } else {
-                    quotationDetail = '原則として2者以上の徴取が必要 (ただし入札不調/落札者辞退の場合は別途手続き)';
+                    quotationDetail = '原則として**2者以上**の徴取が必要 (ただし入札不調/落札者辞退の場合は別途手続き)';
                 }
                 
                 notes.push(detail.notes);
                 notes.push(detail.document);
+                notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
 
-                flowNote += `（予定価格 ${priceMan}万円は第1号の上限額 ${priceLimit}万円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
+
+                flowNote = `（予定価格 ${priceMan}万円は第1号の上限額 ${priceLimit}万円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
 
             } else {
                 // パターンC: 少額随契を超え、特殊事由にも該当しない場合
                 article = '随意契約の適用不可';
                 quotationDetail = '一般競争入札又は指名競争入札が必要です。';
-                notes.push('**【原則】** 地方自治法第234条第2項により、この場合は随意契約は適用できません。**一般競争入札**を原則として検討してください。');
+                
+                notes.push(
+                    '**【原則】** 地方自治法第234条第2項により、この場合は随意契約は適用できません。**一般競争入札**を原則として検討してください。'
+                );
                 notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
+                
+                contractFormDetail = '入札により、落札金額に応じて契約書または請書が必要です。';
+                
                 flowNote = `（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円を超過しており、かつ特殊事由が選択されていません。）`;
             }
 
             // 結果の反映と表示
             resultArticle.textContent = article;
             resultQuotation.textContent = quotationDetail;
+            resultContractForm.textContent = contractFormDetail;
             resultFlow.textContent = flowNote;
 
-            // 注意事項リストのクリアと再設定
-            ['note1', 'note2', 'note3'].forEach((id, index) => {
-                document.getElementById(id).textContent = notes[index] || '';
-                // 3つ以上の注意事項がある場合のための処理（結果が一つにまとまっている場合は不要だが念のため）
-                if (index === 2 && notes.length > 3) {
-                    document.getElementById(id).textContent += ` 他 ${notes.length - 3}件の注意事項があります。`;
-                }
+            // 4. 注意事項リストのクリアと再設定 (notes配列の先頭は契約締結形式)
+            // notes[0]には契約締結形式の情報が入っているため、それをnote1に反映
+            document.getElementById('note1').textContent = notes[0] || '';
+            const remainingNotes = notes.slice(1);
+            ['note2', 'note3', 'note4'].forEach((id, index) => {
+                document.getElementById(id).textContent = remainingNotes[index] || '';
             });
+
+            // 5. 主管課における事務手順の表示
+            resultProcedure.innerHTML = ''; // クリア
+            STANDARD_PROCEDURE.forEach((item, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'step-item';
+                stepDiv.innerHTML = `
+                    <div class="step-number">${index + 1}</div>
+                    <div>
+                        <p class="font-semibold text-gray-800">${item.step}</p>
+                        <p class="text-xs text-gray-600">${item.detail}</p>
+                    </div>
+                `;
+                resultProcedure.appendChild(stepDiv);
+            });
+            
+            // 契約検査課への依頼が必要な場合の手順の調整
+            if (office !== '主管課') {
+                resultProcedure.innerHTML = `
+                    <div class="step-item">
+                        <div class="step-number" style="background-color: var(--attention-color);">1</div>
+                        <div>
+                            <p class="font-semibold text-red-700">契約検査課への依頼</p>
+                            <p class="text-sm text-gray-800">イントラの物品契約(工事入札)管理システムに入力のうえ、出力した執行(施行)伺書に必要書類を添付して提出してください。</p>
+                            <p class="text-xs text-gray-600 mt-1">※依頼案件については、「随意契約及び業者選定理由書」の添付は不要です。時間的な余裕をもって依頼してください。</p>
+                        </div>
+                    </div>
+                `;
+            }
+
 
             // 結果エリアの表示
             output.classList.remove('hidden');
