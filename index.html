@@ -59,6 +59,14 @@
                     </button>
                 </div>
                 
+                <!-- エラーメッセージ表示エリア -->
+                <div id="errorContainer" class="error-container hidden">
+                    <svg class="error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="errorMessage"></span>
+                </div>
+
                 <form id="contractForm">
                     <div class="form-group">
                         <label for="contractType">1. 契約の種類</label>
@@ -75,29 +83,81 @@
 
                     <div class="form-group">
                         <label for="plannedPrice">2. 予定価格 (税込・単位: 万円)</label>
-                        <div class="input-wrapper">
+                        <div class="input-group">
                             <input type="number" id="plannedPrice" min="0" placeholder="例: 165">
-                            <div id="pricePreview" class="price-preview">0 円</div>
+                            <span class="input-unit">万円</span>
                         </div>
+                        <div id="pricePreview" class="price-preview">0 円</div>
                         <p class="input-note">※「165万円」の場合は「165」と入力してください。<span class="text-red">判定は税込額で行われます。</span></p>
                     </div>
 
                     <div class="form-group">
                         <fieldset class="radio-group-container">
                             <legend class="legend-label">3. 特殊な契約事由 (該当する場合)</legend>
-                            <div class="radio-group">
-                                <div class="radio-item">
+                            <div class="radio-cards">
+                                <label class="radio-card">
                                     <input id="reasonNone" name="specialReason" type="radio" value="0" checked>
-                                    <label for="reasonNone"><strong>該当する特殊事由はない</strong> (価格のみで判定)</label>
-                                </div>
-                                <hr class="radio-divider">
-                                <div class="radio-item"><input id="reason2" name="specialReason" type="radio" value="2"><label for="reason2">第2号: 性質・目的が競争入札に適しない (特殊技術等)</label></div>
-                                <div class="radio-item"><input id="reason3" name="specialReason" type="radio" value="3"><label for="reason3">第3号: 福祉施設等 (障害者支援施設等)</label></div>
-                                <div class="radio-item"><input id="reason5" name="specialReason" type="radio" value="5"><label for="reason5">第5号: 緊急の必要 (災害等)</label></div>
-                                <div class="radio-item"><input id="reason6" name="specialReason" type="radio" value="6"><label for="reason6">第6号: 競争入札が不利 (追加工事等)</label></div>
-                                <div class="radio-item"><input id="reason7" name="specialReason" type="radio" value="7"><label for="reason7">第7号: 時価に比べて著しく有利な価格</label></div>
-                                <div class="radio-item"><input id="reason8" name="specialReason" type="radio" value="8"><label for="reason8">第8号: 入札不調</label></div>
-                                <div class="radio-item"><input id="reason9" name="specialReason" type="radio" value="9"><label for="reason9">第9号: 落札者辞退</label></div>
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">該当なし</span>
+                                        <span class="radio-card-desc">特殊な事由はなく、価格のみで判定します。</span>
+                                    </span>
+                                </label>
+                                
+                                <label class="radio-card">
+                                    <input id="reason2" name="specialReason" type="radio" value="2">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第2号: 性質・目的が競争に適しない</span>
+                                        <span class="radio-card-desc">不動産、特殊技術、特許権など。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason3" name="specialReason" type="radio" value="3">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第3号: 福祉施設等</span>
+                                        <span class="radio-card-desc">障害者支援施設、シルバー人材センター等。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason5" name="specialReason" type="radio" value="5">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第5号: 緊急の必要</span>
+                                        <span class="radio-card-desc">災害、疫病蔓延防止など緊急時。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason6" name="specialReason" type="radio" value="6">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第6号: 競争入札が不利</span>
+                                        <span class="radio-card-desc">現契約者による追加工事、継続業務など。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason7" name="specialReason" type="radio" value="7">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第7号: 著しく有利な価格</span>
+                                        <span class="radio-card-desc">時価より著しく安い価格での購入。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason8" name="specialReason" type="radio" value="8">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第8号: 入札不調</span>
+                                        <span class="radio-card-desc">入札者がいない、落札者がいない場合。</span>
+                                    </span>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input id="reason9" name="specialReason" type="radio" value="9">
+                                    <span class="radio-card-content">
+                                        <span class="radio-card-title">第9号: 落札者辞退</span>
+                                        <span class="radio-card-desc">落札者が契約を結ばない場合。</span>
+                                    </span>
+                                </label>
                             </div>
                         </fieldset>
                     </div>
