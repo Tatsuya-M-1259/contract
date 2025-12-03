@@ -1,7 +1,7 @@
 {
-  "name": "あなたのPWAアプリ名 (変更してください)",
-  "short_name": "随契判定ナビ",
-  "description": "このアプリの説明を記述してください。",
+  "name": "天草市 随意契約判定ナビ",
+  "short_name": "随契判定",
+  "description": "天草市の随意契約の根拠条文と手続きを判定するガイドアプリです。",
   "icons": [
     {
       "src": "icon-192x192.png",
@@ -16,6 +16,6 @@
   ],
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#9333ea",
-  "theme_color": "#9333ea"
+  "background_color": "#f3f4f6",
+  "theme_color": "#10B981"
 }
