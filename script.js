@@ -73,12 +73,37 @@ function updatePricePreview(val) {
     else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円"; }
 }
 
+// エラーメッセージの表示・非表示
+function showError(message, elementIdToFocus) {
+    const errorContainer = document.getElementById('errorContainer');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorContainer.classList.remove('hidden');
+    
+    // エラー箇所へスクロール
+    if (elementIdToFocus) {
+        const target = document.getElementById(elementIdToFocus);
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.focus();
+        // 視覚的な強調（一時的に赤枠など）
+        target.style.outline = "2px solid #EF4444";
+        setTimeout(() => { target.style.outline = ""; }, 2000);
+    } else {
+        errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function hideError() {
+    document.getElementById('errorContainer').classList.add('hidden');
+}
+
 function resetForm() {
     document.getElementById('contractType').value = "";
     document.getElementById('plannedPrice').value = "";
     document.getElementById('reasonNone').checked = true;
     updatePricePreview("");
-    // サマリーと結果エリアを隠す
+    hideError();
+    
     document.getElementById('inputSummary').classList.add('hidden');
     document.getElementById('resultOutput').classList.add('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,13 +124,20 @@ function determineContractOffice(type, price, specialReason) {
 }
 
 function judgeContract() {
+    hideError(); // 判定前にエラーをクリア
+
     const contractType = document.getElementById('contractType').value;
     const priceMan = parseFloat(document.getElementById('plannedPrice').value);
     const specialReasonElement = document.querySelector('input[name="specialReason"]:checked');
     const specialReason = specialReasonElement ? specialReasonElement.value : '0';
     
-    if (!contractType || isNaN(priceMan) || priceMan < 0) {
-        alert('契約の種類と予定価格を正しく入力してください。\n単位は「万円」です。');
+    // バリデーション (alert廃止)
+    if (!contractType) {
+        showError('「契約の種類」を選択してください。', 'contractType');
+        return;
+    }
+    if (isNaN(priceMan) || priceMan < 0 || document.getElementById('plannedPrice').value === "") {
+        showError('「予定価格」を正しく入力してください。', 'plannedPrice');
         return;
     }
 
@@ -118,7 +150,6 @@ function judgeContract() {
     if (specialReason !== '0' && REASON_DETAILS[specialReason]) {
         reasonName = REASON_DETAILS[specialReason].name;
     }
-    // 表示内容をセットし、非表示クラスを削除
     summaryEl.innerHTML = `
         <div><strong>契約の種類:</strong> ${typeName}</div>
         <div><strong>予定価格:</strong> ${priceMan}万円 (税込)</div>
@@ -245,17 +276,22 @@ function judgeContract() {
         STANDARD_PROCEDURE.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'step-item';
+            
             const numDiv = document.createElement('div');
             numDiv.className = 'step-number';
             numDiv.textContent = index + 1;
+            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'step-content';
+            
             const titleP = document.createElement('p');
             titleP.className = 'step-title';
             titleP.textContent = item.step;
+            
             const detailP = document.createElement('p');
             detailP.className = 'step-detail';
             detailP.appendChild(createSafeHTML(item.detail));
+            
             contentDiv.appendChild(titleP);
             contentDiv.appendChild(detailP);
             div.appendChild(numDiv);
