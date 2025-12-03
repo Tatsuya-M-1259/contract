@@ -96,7 +96,7 @@ h1 {
 
 /* フォーム要素 */
 .form-group { margin-bottom: 1.5rem; }
-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; }
+label, .legend-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; }
 select, input[type="number"] {
     width: 100%;
     padding: 0.5rem 0.75rem;
@@ -118,6 +118,12 @@ select:focus, input:focus { outline: 2px solid var(--primary); border-color: tra
 }
 .input-note { font-size: 0.75rem; color: var(--danger); font-weight: bold; margin-top: 4px; }
 
+/* Fieldset & Radio Group */
+.radio-group-container {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
 .radio-group { background-color: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid #e5e7eb; }
 .radio-item { display: flex; align-items: flex-start; margin-bottom: 0.5rem; font-size: 0.875rem; }
 .radio-item:last-child { margin-bottom: 0; }
@@ -218,6 +224,16 @@ select:focus, input:focus { outline: 2px solid var(--primary); border-color: tra
 .flow-footer { margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 0.5rem; }
 .text-italic { font-size: 0.75rem; color: #4b5563; font-style: italic; }
 
+/* 印刷用サマリースタイル */
+.input-summary {
+    display: none; /* 通常は非表示（JSで制御も可、今回は印刷時のみ必須） */
+    font-size: 0.85rem;
+    color: #4b5563;
+    border-bottom: 2px dashed #d1d5db;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
 /* 印刷スタイル */
 @media print {
     body { background: white; font-size: 11pt; padding: 0; }
@@ -225,6 +241,10 @@ select:focus, input:focus { outline: 2px solid var(--primary); border-color: tra
     .grid { display: block; }
     .card { box-shadow: none; padding: 0; margin-bottom: 2rem; }
     .result-box { border: none; }
+    
+    /* 印刷時にサマリーを表示 */
+    .input-summary { display: block !important; }
+    
     .result-box::before {
         content: "【判定結果】 天草市 随意契約判定ガイド";
         font-size: 16pt; font-weight: bold; display: block;
