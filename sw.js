@@ -1,5 +1,5 @@
-// キャッシュ名 (更新時はバージョンを上げる: v3 -> v4)
-const CACHE_NAME = 'contract-guide-v4';
+// キャッシュ名 (更新時はバージョンを上げる: v5 -> v6)
+const CACHE_NAME = 'contract-guide-v6';
 
 // キャッシュするファイル一式
 const ASSETS = [
