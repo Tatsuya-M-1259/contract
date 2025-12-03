@@ -5,9 +5,7 @@
  */
 
 const CONFIG = {
-    // 随意契約の金額上限 (施行令第167条の2第1項第1号、規則第15条) 
-    // ※単位: 千円 (税込)
-    // ※ユーザー指定により、旧基準または独自基準（工事製造200万円等）を適用
+    // 随意契約の金額上限 (千円単位・税込)
     PRICE_LIMITS: {
         '1': 2000, // 工事又は製造の請負 (200万円)
         '2': 1500, // 財産の買入れ (150万円)
@@ -16,8 +14,7 @@ const CONFIG = {
         '5': 300,  // 物件の貸付け (30万円)
         '6': 1000  // 前各号に掲げる以外のもの (100万円)
     },
-    // 契約検査課への依頼基準金額 
-    // ※単位: 千円 (税込)
+    // 契約検査課への依頼基準金額 (千円単位・税込)
     OFFICE_THRESHOLDS: {
         CONSTRUCTION: 200, // 工事・製造等 (20万円超)
         GOODS: 200,        // 物品購入 (20万円超)
@@ -68,16 +65,32 @@ function createSafeHTML(markdownText) {
     return span;
 }
 
-// 単位: 千円 -> 円 変換表示
+// 単位: 千円 -> 円 変換表示 & 桁間違い警告
 function updatePricePreview(val) {
     const previewEl = document.getElementById('pricePreview');
-    if (!val || val === '') { previewEl.textContent = "0 円"; return; }
+    const warningEl = document.getElementById('unitWarning');
+    
+    if (!val || val === '') { 
+        previewEl.textContent = "0 円"; 
+        warningEl.classList.add('hidden');
+        return; 
+    }
     
     // 入力値(千円) × 1000
     const yen = parseFloat(val) * 1000;
     
-    if (isNaN(yen)) { previewEl.textContent = "数値エラー"; } 
-    else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円 (税込)"; }
+    if (isNaN(yen)) { 
+        previewEl.textContent = "数値エラー"; 
+    } else { 
+        previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円 (税込)"; 
+    }
+
+    // 警告: 入力値が50,000以上（5千万円以上）の場合、単位間違いの可能性大
+    if (parseFloat(val) >= 50000) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
 }
 
 // エラーメッセージの表示
@@ -116,7 +129,6 @@ function resetForm() {
 
 // 担当部署の判定 (千円単位で比較)
 function determineContractOffice(type, price, specialReason) {
-    // 特定随契（相手方が決まっているもの）は主管課処理が原則
     const isOneParty = ['2', '3', '5', '6'].includes(specialReason);
     if (isOneParty) return '主管課';
 
@@ -134,7 +146,6 @@ function judgeContract() {
     hideError();
 
     const contractType = document.getElementById('contractType').value;
-    // 入力は千円単位
     const priceInput = parseFloat(document.getElementById('plannedPrice').value);
     const specialReasonElement = document.querySelector('input[name="specialReason"]:checked');
     const specialReason = specialReasonElement ? specialReasonElement.value : '0';
@@ -149,9 +160,7 @@ function judgeContract() {
         return;
     }
 
-    // ------------------------------------------
-    // 印刷用の入力サマリー生成
-    // ------------------------------------------
+    // 入力サマリー表示
     const summaryEl = document.getElementById('inputSummary');
     const typeName = CONTRACT_TYPE_NAMES[contractType] || '不明';
     let reasonName = '特になし (価格要件のみ)';
@@ -164,10 +173,10 @@ function judgeContract() {
         <div><strong>選択理由:</strong> ${reasonName}</div>
     `;
     summaryEl.classList.remove('hidden');
-    // ------------------------------------------
 
     let article = '', quotationDetail = '', notes = [], flowNote = '', contractFormDetail = ''; 
-    
+    let statusIcon = '', statusText = '', statusClass = '';
+
     const office = determineContractOffice(contractType, priceInput, specialReason);
     const resultOfficeDiv = document.getElementById('resultOffice');
     const resultOfficeNormalDiv = document.getElementById('resultOfficeNormal');
@@ -182,15 +191,15 @@ function judgeContract() {
         resultOfficeNormalDiv.classList.remove('hidden');
     }
 
-    // 契約形式判定 (千円単位: 50万円=500, 20万円=200)
+    // 契約形式判定
     const resultContractForm = document.getElementById('resultContractForm');
     resultContractForm.className = 'result-text-lg';
     
-    if (priceInput > 500) { // 500千円(50万円)超
+    if (priceInput > 500) { 
         contractFormDetail = '【契約書が必要】(50万円超)';
         resultContractForm.classList.add('text-red');
         notes.push('**【契約締結形式】** 契約書が必要です。落札決定後速やかに契約書(案)を作成し、契約締結すること。');
-    } else if (priceInput > 200) { // 200千円(20万円)超
+    } else if (priceInput > 200) { 
         contractFormDetail = '【請書が必要】(20万円超50万円以内)';
         resultContractForm.classList.add('text-orange');
         notes.push('**【契約締結形式】** 請書(案)を作成し、契約締結すること。');
@@ -202,20 +211,20 @@ function judgeContract() {
     resultContractForm.textContent = contractFormDetail;
 
     const priceLimit = CONFIG.PRICE_LIMITS[contractType];
-    // undefinedチェック
-    if (!priceLimit) {
-        showError('契約区分の設定エラーです。', 'contractType');
-        return;
-    }
-
     const isMinorContract = priceInput <= priceLimit;
     
+    // 判定ロジック & ステータスバナー設定
+    const resultOutput = document.getElementById('resultOutput');
+    const statusBanner = document.getElementById('statusBanner');
+
     if (isMinorContract) {
-        // 限度額表示 (万円換算)
-        const limitDisp = (priceLimit / 10000) >= 1 ? `${priceLimit/10}万円` : `${priceLimit/10}万円`;
+        statusIcon = '✅';
+        statusText = '随意契約が可能です (少額)';
+        statusClass = 'status-ok';
+        
+        const limitDisp = (priceLimit / 10000) >= 1 ? `${priceLimit/10}万円` : `${priceLimit}千円`;
         article = `施行令第167条の2第1項第1号 (少額随契 - 上限${limitDisp})`;
         
-        // 少額特例: 10万円以下 (100千円)
         if (priceInput <= 100) {
             quotationDetail = '原則として1者のみの徴取で足りる (規則第14条第1項第3号)';
         } else if (['7','8','9'].includes(specialReason)) {
@@ -225,11 +234,9 @@ function judgeContract() {
             quotationDetail = '原則として2者以上の徴取が必要';
         }
         
-        // 予定価格調書: 50万円以下 (500千円) は省略可
         if (priceInput <= 500) notes.push('予定価格調書の作成は省略可能 (50万円以下)');
         else notes.push('予定価格調書を作成すること (50万円超)');
         
-        // 理由書不要の条件 (限度額内 かつ 10万円超 かつ 特殊事由なし)
         if (priceInput <= priceLimit && priceInput > 100 && specialReason === '0' && quotationDetail.includes('2者以上')) {
             notes.push('見積予定業者が複数で、執行伺書に根拠条文と見積予定業者(複数者)の記載があれば、理由書の添付は**不要**です。');
         } else if (specialReason !== '0') {
@@ -241,6 +248,10 @@ function judgeContract() {
         flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceInput}千円は上限額 ${priceLimit}千円以下）`;
 
     } else if (specialReason !== '0') {
+        statusIcon = '✅';
+        statusText = '随意契約が可能です (特殊事由)';
+        statusClass = 'status-ok';
+
         const detail = REASON_DETAILS[specialReason];
         article = `施行令第167条の2第1項第${specialReason}号 (${detail.name.split('(')[1].replace(')', '')})`;
         if (detail.oneParty) {
@@ -254,6 +265,10 @@ function judgeContract() {
         notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
         flowNote = `（予定価格 ${priceInput}千円は第1号の上限額 ${priceLimit}千円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
     } else {
+        statusIcon = '⚠️';
+        statusText = '入札が必要です (随意契約不可)';
+        statusClass = 'status-ng';
+
         article = '随意契約の適用不可';
         quotationDetail = '一般競争入札又は指名競争入札が必要です。';
         notes.push('**【原則】** 地方自治法第234条第2項により、この場合は随意契約は適用できません。**一般競争入札**を原則として検討してください。');
@@ -262,6 +277,13 @@ function judgeContract() {
         resultContractForm.textContent = contractFormDetail; 
         flowNote = `（予定価格 ${priceInput}千円は上限額 ${priceLimit}千円を超過しており、かつ特殊事由が選択されていません。）`;
     }
+
+    // ステータスバナー更新
+    statusBanner.textContent = `${statusIcon} ${statusText}`;
+    statusBanner.className = `status-banner ${statusClass}`;
+    
+    // 背景色の調整 (結果ボックス自体にも色を付ける)
+    resultOutput.className = `card result-box hidden result-${statusClass}`;
 
     document.getElementById('resultArticle').textContent = article;
     
@@ -321,6 +343,20 @@ function judgeContract() {
     output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// コピー機能
+function copyResult() {
+    const summary = document.getElementById('inputSummary').innerText;
+    const article = document.getElementById('resultArticle').innerText;
+    const notes = document.getElementById('resultNotes').innerText;
+    const text = `【随意契約判定結果】\n\n[条件]\n${summary}\n\n[判定]\n根拠条文: ${article}\n\n[注意事項]\n${notes}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2000);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
@@ -346,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
         installBtnContainer.classList.add('hidden');
     });
 
-    // 入力補助：フォーカス時に全選択
     const priceInput = document.getElementById('plannedPrice');
     priceInput.addEventListener('focus', function() {
         this.select();
@@ -363,4 +398,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('resetBtn').addEventListener('click', resetForm);
     document.getElementById('printBtn').addEventListener('click', () => window.print());
+    document.getElementById('copyBtn').addEventListener('click', copyResult);
 });
