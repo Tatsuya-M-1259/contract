@@ -3,226 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天草市 随意契約判定ガイド</title>
+    <title>天草市 随意契約判定ナビ</title>
     
     <!-- PWA設定 -->
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192x192.png">
+    
+    <!-- iOS用PWA設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="随契判定">
     <meta name="theme-color" content="#10B981">
     
-    <!-- 【重要】CSP設定: 外部からの不正な読み込みを遮断し、自身のスクリプトのみ許可する -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <!-- 【セキュリティ強化】CSP設定: 外部読込禁止、インラインスクリプト禁止 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;">
 
-    <style>
-        /* デザインシステム (Tailwind風のスタイルを定義) */
-        :root {
-            --primary: #10B981; /* Emerald 500 */
-            --primary-dark: #059669; /* Emerald 600 */
-            --bg-body: #f3f4f6; /* Gray 100 */
-            --bg-card: #ffffff;
-            --text-main: #1f2937; /* Gray 800 */
-            --text-sub: #4b5563; /* Gray 600 */
-            --border: #d1d5db; /* Gray 300 */
-            --danger: #EF4444; /* Red 500 */
-            --warning-bg: #FEF3C7; /* Amber 100 */
-            --warning-text: #92400E; /* Amber 800 */
-            --link: #3B82F6; /* Blue 500 */
-        }
-
-        * { box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            margin: 0;
-            padding: 1rem;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* ヘッダー */
-        header { text-align: center; margin-bottom: 2rem; }
-        h1 {
-            font-size: 1.75rem;
-            font-weight: 800;
-            border-bottom: 4px solid var(--primary);
-            display: inline-block;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        @media (min-width: 640px) { h1 { font-size: 2.25rem; } }
-
-        .subtitle { font-size: 1.125rem; font-weight: bold; color: var(--text-sub); }
-        .highlight-red { color: var(--danger); }
-        .underline { text-decoration: underline; }
-
-        /* インストールボタン */
-        .install-btn-wrapper { margin-top: 1rem; display: none; }
-        .install-btn {
-            background-color: var(--link);
-            color: white;
-            font-weight: bold;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 9999px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            transition: background-color 0.2s;
-        }
-        .install-btn:hover { background-color: #2563EB; }
-
-        /* 注意バナー */
-        .warning-banner {
-            background-color: var(--warning-bg);
-            border-left: 4px solid #F59E0B;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            color: var(--warning-text);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .warning-icon { margin-right: 0.75rem; width: 24px; height: 24px; flex-shrink: 0; }
-
-        /* レイアウト */
-        .grid { display: grid; grid-template-columns: 1fr; gap: 2rem; }
-        @media (min-width: 1024px) { .grid { grid-template-columns: 1fr 1fr; } }
-
-        /* カード */
-        .card {
-            background-color: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .card-title { font-size: 1.5rem; font-weight: bold; color: var(--primary-dark); margin: 0; }
-        
-        /* フォーム要素 */
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; }
-        select, input[type="number"] {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            margin-top: 0.25rem;
-        }
-        select:focus, input:focus { outline: 2px solid var(--primary); border-color: transparent; }
-        
-        .radio-group { background-color: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid #e5e7eb; }
-        .radio-item { display: flex; align-items: flex-start; margin-bottom: 0.5rem; font-size: 0.875rem; }
-        .radio-item:last-child { margin-bottom: 0; }
-        .radio-item input { margin-top: 0.25rem; margin-right: 0.5rem; }
-        .radio-item label { font-weight: normal; margin: 0; cursor: pointer; }
-
-        /* ボタン */
-        .btn-group { display: flex; gap: 0.75rem; }
-        .btn-primary {
-            flex: 1;
-            background-color: var(--primary);
-            color: white;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn-primary:hover { background-color: var(--primary-dark); }
-        .btn-secondary {
-            background-color: #e5e7eb;
-            color: var(--text-sub);
-            padding: 0.75rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-secondary:hover { background-color: #d1d5db; }
-        
-        .btn-print {
-            padding: 0.25rem 0.75rem;
-            background-color: #f3f4f6;
-            border: 1px solid var(--border);
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-
-        /* 結果エリア */
-        .hidden { display: none !important; }
-        .result-box { border-left: 5px solid var(--primary); transition: all 0.3s ease; }
-        .result-section { margin-bottom: 1.5rem; }
-        .section-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-sub); margin-bottom: 0.25rem; }
-        .result-text-lg { font-size: 1.25rem; font-weight: 800; }
-        .text-red { color: var(--danger); }
-        .text-emerald { color: var(--primary-dark); }
-        .text-orange { color: #F97316; }
-
-        .office-attention {
-            background-color: #FEF2F2;
-            border-left: 4px solid var(--danger);
-            padding: 0.75rem;
-            border-radius: 0.375rem;
-            font-weight: bold;
-            color: #991B1B;
-        }
-        
-        .notes-box {
-            background-color: #ECFDF5;
-            border-left: 4px solid var(--primary);
-            padding: 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-        }
-        .notes-box p { margin: 0.25rem 0; }
-
-        /* 手順リスト */
-        .step-list { margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 1rem; }
-        .step-item { display: flex; margin-bottom: 1rem; }
-        .step-number {
-            flex-shrink: 0;
-            width: 2rem; height: 2rem;
-            background-color: var(--link);
-            color: white;
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold;
-            margin-right: 0.75rem;
-        }
-        .step-content p { margin: 0; }
-        .step-title { font-weight: 600; color: var(--text-main); }
-        .step-detail { font-size: 0.75rem; color: var(--text-sub); }
-
-        /* 印刷スタイル */
-        @media print {
-            body { background: white; font-size: 11pt; padding: 0; }
-            .no-print, header, .warning-banner, .card:first-child, .install-btn-wrapper { display: none !important; }
-            .grid { display: block; }
-            .card { box-shadow: none; padding: 0; margin-bottom: 2rem; }
-            .result-box { border: none; }
-            .result-box::before {
-                content: "【判定結果】 天草市 随意契約判定ガイド";
-                font-size: 16pt; font-weight: bold; display: block;
-                margin-bottom: 1rem; border-bottom: 2px solid black;
-            }
-        }
-    </style>
+    <!-- スタイルシートの読み込み -->
+    <link rel="stylesheet" href="./style.css">
+    
+    <!-- プログラムの読み込み (defer属性でHTML解析後に実行) -->
+    <script src="./script.js" defer></script>
 </head>
 <body>
 
@@ -233,10 +33,10 @@
                 本アプリは、一般競争入札の原則に対する<span class="highlight-red">例外規定（随意契約）</span>の<span class="underline">適正な判断と手続き</span>をサポートします。
             </p>
             
-            <!-- インストールボタン -->
-            <div id="installBtnContainer" class="install-btn-wrapper">
+            <!-- インストールボタン (初期状態は非表示) -->
+            <div id="installBtnContainer" class="install-btn-wrapper hidden">
                 <button id="installBtn" class="install-btn">
-                    <svg style="width:20px; height:20px; margin-right:8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     アプリをインストール
@@ -261,12 +61,12 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">契約情報の入力</h2>
-                    <button id="resetBtn" class="btn-print no-print" style="border:none; color:var(--danger); background:none; text-decoration:underline;">
+                    <button id="resetBtn" class="btn-clear no-print">
                         入力をクリア
                     </button>
                 </div>
                 
-                <form id="contractForm" onsubmit="return false;">
+                <form id="contractForm">
                     <div class="form-group">
                         <label for="contractType">1. 契約の種類</label>
                         <select id="contractType">
@@ -282,11 +82,11 @@
 
                     <div class="form-group">
                         <label for="plannedPrice">2. 予定価格 (税抜・単位: 万円)</label>
-                        <div style="position: relative;">
+                        <div class="input-wrapper">
                             <input type="number" id="plannedPrice" min="0" placeholder="例: 150">
-                            <div id="pricePreview" style="position: absolute; right: 10px; top: 10px; color: #9ca3af; font-family: monospace; pointer-events: none;">0 円</div>
+                            <div id="pricePreview" class="price-preview">0 円</div>
                         </div>
-                        <p style="font-size: 0.75rem; color: var(--danger); font-weight: bold; margin-top: 4px;">※「100万円」の場合は「100」と入力してください</p>
+                        <p class="input-note">※「100万円」の場合は「100」と入力してください</p>
                     </div>
 
                     <div class="form-group">
@@ -296,8 +96,7 @@
                                 <input id="reasonNone" name="specialReason" type="radio" value="0" checked>
                                 <label for="reasonNone"><strong>該当する特殊事由はない</strong> (価格のみで判定)</label>
                             </div>
-                            <hr style="border:0; border-top:1px solid #e5e7eb; margin:8px 0;">
-                            <!-- 各事由のラジオボタン -->
+                            <hr class="radio-divider">
                             <div class="radio-item"><input id="reason2" name="specialReason" type="radio" value="2"><label for="reason2">第2号: 性質・目的が競争入札に適しない (特殊技術等)</label></div>
                             <div class="radio-item"><input id="reason3" name="specialReason" type="radio" value="3"><label for="reason3">第3号: 福祉施設等 (障害者支援施設等)</label></div>
                             <div class="radio-item"><input id="reason5" name="specialReason" type="radio" value="5"><label for="reason5">第5号: 緊急の必要 (災害等)</label></div>
@@ -309,8 +108,8 @@
                     </div>
 
                     <div class="btn-group">
-                        <button id="judgeBtn" class="btn-primary">契約根拠を判定する</button>
-                        <button id="clearBtn" class="btn-secondary">クリア</button>
+                        <button type="button" id="judgeBtn" class="btn-primary">契約根拠を判定する</button>
+                        <button type="button" id="clearBtn" class="btn-secondary">クリア</button>
                     </div>
                 </form>
             </div>
@@ -320,15 +119,15 @@
                 <div class="card-header">
                     <h2 class="card-title text-emerald">判定結果と手続き</h2>
                     <button id="printBtn" class="btn-print no-print">
-                        <svg style="width:16px; height:16px; margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         印刷
                     </button>
                 </div>
                 
                 <div class="result-section">
                     <div class="section-label">事務担当部署</div>
-                    <div id="resultOffice" class="office-attention" style="display:none;"></div>
-                    <div id="resultOfficeNormal" style="font-size:1rem;"></div>
+                    <div id="resultOffice" class="office-attention hidden"></div>
+                    <div id="resultOfficeNormal" class="text-normal hidden"></div>
                 </div>
 
                 <div class="result-section">
@@ -343,7 +142,7 @@
 
                 <div class="result-section">
                     <div class="section-label">見積徴取の要否</div>
-                    <div id="resultQuotation" style="font-weight:bold;"></div>
+                    <div id="resultQuotation" class="font-bold"></div>
                 </div>
                 
                 <div class="result-section">
@@ -352,305 +151,17 @@
                 </div>
 
                 <div class="step-list">
-                    <div class="section-label" style="margin-bottom:0.75rem;">主管課における事務手順 (ガイドライン P.10 参照)</div>
+                    <div class="section-label mb-sm">主管課における事務手順 (ガイドライン P.10 参照)</div>
                     <div id="resultProcedure"></div>
                 </div>
                 
-                <div style="margin-top:1rem; border-top:1px solid #e5e7eb; padding-top:0.5rem;">
+                <div class="flow-footer">
                     <div class="section-label">判定フロー補足</div>
-                    <p id="resultFlow" style="font-size:0.75rem; color:#4b5563; font-style:italic;"></p>
+                    <p id="resultFlow" class="text-italic"></p>
                 </div>
             </div>
 
         </div>
     </div>
-
-    <!-- ロジック部分 (分離・堅牢化) -->
-    <script>
-        // 設定定数
-        const CONFIG = {
-            PRICE_LIMITS: {
-                '1': 200, '2': 150, '3': 80, '4': 50, '5': 30, '6': 100
-            },
-            OFFICE_THRESHOLDS: {
-                CONSTRUCTION: 20, GOODS: 20, RENTAL: 20, SERVICE: 50
-            }
-        };
-
-        const REASON_DETAILS = {
-            '2': { name: '第2号 (性質又は目的が競争入札に適しない)', oneParty: true, notes: '不動産の買入れ・借入れ、特殊技術、特許権等。契約の目的達成に特定の者が必要。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。' },
-            '3': { name: '第3号 (福祉関係施設等からの買入れ・役務)', oneParty: true, notes: '障害者支援施設等、シルバー人材センター、母子福祉団体等との契約。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。**【重要】公表手続き（発注の見通し、契約締結後）が必要。**' },
-            '5': { name: '第5号 (緊急の必要)', oneParty: true, notes: '天災地変等、予見し得ない緊急事態による。年度末等の予算執行上の都合は対象外。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。' },
-            '6': { name: '第6号 (競争入札に付することが不利)', oneParty: true, notes: '現履行中の受託者にさせた方が工期短縮、経費節減等で有利な場合。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。' },
-            '7': { name: '第7号 (時価に比べて著しく有利な価格)', oneParty: false, notes: '他の者に比べて著しく有利な価格で契約できる見込みがある場合。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。**【重要】2者以上の者に見積書を依頼し、比較検討すること。**' },
-            '8': { name: '第8号 (入札不調)', oneParty: false, notes: '入札者がない、又は再度の入札で落札者がない場合。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。**【重要】契約保証金・履行期限を除き、当初の予定価格・条件を変更不可。**' },
-            '9': { name: '第9号 (落札者が契約を締結しない)', oneParty: false, notes: '落札者が辞退・倒産等で契約締結しない場合。', document: '「随意契約及び業者選定理由書」に採用した理由、業者選定理由を明確に記載すること。**【重要】落札金額の制限内で見積合わせ。履行期限を除き、当初の条件を変更不可。**' },
-        };
-
-        const STANDARD_PROCEDURE = [
-            { step: '執行(施行)伺書の作成', detail: '物品契約管理システムへ登録し、システムから出力 (工事は除く)。随意契約を採用した理由、業者を選定した理由等を記入する。**原則「随意契約及び業者選定理由書」を作成添付**。仕様書、カタログ等を添付。' },
-            { step: '指名伺書の作成', detail: '業者へ通知書により見積依頼 (**原則として2者以上**)。指名業者に偏りが出ないよう考慮。見積期間は特別の場合を除き5日 (休日等を除く)が必要。' },
-            { step: '見積書の開札', detail: '2名以上 (立会い者含む) で開札し、記載事項の点検。開札調書を作成。' },
-            { step: '落札者の決定', detail: '開札後、見積書提出の全業者に結果を連絡。契約金額に応じた請書(案)または契約書(案)を作成。' },
-            { step: '契約の締結', detail: '落札決定後速やかに (概ね1週間以内) 契約締結。' }
-        ];
-
-        // セキュリティ: DOMエスケープ処理の簡略化 (textContentを使うので基本不要だが、太字変換などのために用意)
-        function createSafeHTML(markdownText) {
-            const span = document.createElement('span');
-            // 簡易的なMarkdownパーサー (**太字** のみ対応)
-            const parts = markdownText.split(/(\*\*.*?\*\*)/g);
-            parts.forEach(part => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                    const strong = document.createElement('strong');
-                    strong.textContent = part.slice(2, -2);
-                    span.appendChild(strong);
-                } else {
-                    span.appendChild(document.createTextNode(part));
-                }
-            });
-            return span;
-        }
-
-        // 金額プレビュー
-        function updatePricePreview(val) {
-            const previewEl = document.getElementById('pricePreview');
-            if (!val || val === '') { previewEl.textContent = "0 円"; return; }
-            const yen = parseFloat(val) * 10000;
-            if (isNaN(yen)) { previewEl.textContent = "数値エラー"; } 
-            else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円"; }
-        }
-
-        // フォームリセット
-        function resetForm() {
-            document.getElementById('contractType').value = "";
-            document.getElementById('plannedPrice').value = "";
-            document.getElementById('reasonNone').checked = true;
-            updatePricePreview("");
-            document.getElementById('resultOutput').classList.add('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // 担当部署判定
-        function determineContractOffice(type, price, specialReason) {
-            const isOneParty = ['2', '3', '5', '6'].includes(specialReason);
-            if (isOneParty) return '主管課';
-            const thresholds = CONFIG.OFFICE_THRESHOLDS;
-            switch (type) {
-                case '1': if (price > thresholds.CONSTRUCTION) return '契約検査課 (競争入札が必要な案件)'; break;
-                case '2': if (price > thresholds.GOODS) return '契約検査課'; break;
-                case '3': if (price > thresholds.RENTAL) return '契約検査課'; break;
-                case '6': if (price > thresholds.SERVICE) return '契約検査課'; break;
-            }
-            return '主管課';
-        }
-
-        // メイン判定ロジック
-        function judgeContract() {
-            const contractType = document.getElementById('contractType').value;
-            const priceMan = parseFloat(document.getElementById('plannedPrice').value);
-            const specialReasonElement = document.querySelector('input[name="specialReason"]:checked');
-            const specialReason = specialReasonElement ? specialReasonElement.value : '0';
-            
-            if (!contractType || isNaN(priceMan) || priceMan < 0) {
-                alert('契約の種類と予定価格を正しく入力してください。\n単位は「万円」です。');
-                return;
-            }
-
-            let article = '', quotationDetail = '', notes = [], flowNote = '', contractFormDetail = ''; 
-            
-            // 部署判定と表示
-            const office = determineContractOffice(contractType, priceMan, specialReason);
-            const resultOfficeDiv = document.getElementById('resultOffice');
-            const resultOfficeNormalDiv = document.getElementById('resultOfficeNormal');
-            
-            if (office !== '主管課') {
-                resultOfficeDiv.textContent = `${office}へ依頼してください`;
-                resultOfficeDiv.style.display = 'block';
-                resultOfficeNormalDiv.textContent = '';
-            } else {
-                resultOfficeDiv.style.display = 'none';
-                resultOfficeNormalDiv.textContent = '主管課で事務を行います';
-            }
-
-            // 契約形式判定
-            const resultContractForm = document.getElementById('resultContractForm');
-            resultContractForm.className = 'result-text-lg'; // リセット
-            if (priceMan > 50) {
-                contractFormDetail = '【契約書が必要】(50万円超)';
-                resultContractForm.classList.add('text-red');
-                notes.push('**【契約締結形式】** 契約書が必要です。落札決定後速やかに契約書(案)を作成し、契約締結すること。');
-            } else if (priceMan > 20) {
-                contractFormDetail = '【請書が必要】(20万円超50万円以内)';
-                resultContractForm.classList.add('text-orange');
-                notes.push('**【契約締結形式】** 請書(案)を作成し、契約締結すること。');
-            } else {
-                contractFormDetail = '【契約書・請書は原則不要】(20万円以下)';
-                resultContractForm.classList.add('text-emerald');
-                notes.push('**【契約締結形式】** 契約書・請書は原則不要です。発注書や事務処理要領に基づき、適切に執行してください。');
-            }
-            resultContractForm.textContent = contractFormDetail;
-
-            // 条文判定
-            const priceLimit = CONFIG.PRICE_LIMITS[contractType];
-            const isMinorContract = priceMan <= priceLimit;
-            const isSpecialReason = specialReason !== '0';
-            
-            if (isMinorContract) {
-                article = `施行令第167条の2第1項第1号 (少額随契 - 上限${priceLimit}万円)`;
-                if (priceMan <= 10) {
-                    quotationDetail = '原則として1者のみの徴取で足りる (規則第14条第1項第3号)';
-                } else if (['7','8','9'].includes(specialReason)) {
-                    quotationDetail = '原則として2者以上の徴取が必要 (特殊事由により競争性を確保)';
-                    notes.push('【競争性の確保】第7/8/9号事由が重なる場合、少額でも時価や競争性を比較検討するため、原則として2者以上の見積徴取を強く推奨します。');
-                } else {
-                    quotationDetail = '原則として2者以上の徴取が必要';
-                }
-                
-                if (priceMan <= 50) notes.push('予定価格調書の作成は省略可能 (50万円以下)');
-                else notes.push('予定価格調書を作成すること (50万円超)');
-                
-                if (priceMan <= priceLimit && priceMan > 10 && specialReason === '0' && quotationDetail.includes('2者以上')) {
-                    notes.push('見積予定業者が複数で、執行伺書に根拠条文と見積予定業者(複数者)の記載があれば、理由書の添付は**不要**です。');
-                } else if (isSpecialReason) {
-                    notes.push('【特殊事由あり】第1号優先適用ですが、特殊事由が重なる場合は「随意契約及び業者選定理由書」を作成添付し、業者選定理由を明確にすること。');
-                    if (specialReason === '3') notes.push('**【重要】第3号(福祉施設等)の公表手続きが必要です。**');
-                } else if (priceMan <= 10) {
-                    notes.push('1者随契で処理する場合、業者選定理由等を執行伺書に記載してください。');
-                }
-                flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円以下）`;
-
-            } else if (isSpecialReason) {
-                const detail = REASON_DETAILS[specialReason];
-                article = `施行令第167条の2第1項第${specialReason}号 (${detail.name.split('(')[1].replace(')', '')})`;
-                if (detail.oneParty) {
-                    quotationDetail = '原則として1者のみの徴取で足りる (規則第14条第1項による)';
-                    if (specialReason === '5') notes.push('【緊急時】可能であれば複数の業者から見積を徴取するなど競争性を確保するよう心がけてください。');
-                } else {
-                    quotationDetail = '原則として2者以上の徴取が必要';
-                }
-                notes.push(detail.notes);
-                notes.push(detail.document);
-                notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
-                flowNote = `（予定価格 ${priceMan}万円は第1号の上限額 ${priceLimit}万円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
-            } else {
-                article = '随意契約の適用不可';
-                quotationDetail = '一般競争入札又は指名競争入札が必要です。';
-                notes.push('**【原則】** 地方自治法第234条第2項により、この場合は随意契約は適用できません。**一般競争入札**を原則として検討してください。');
-                notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
-                contractFormDetail = '入札により、落札金額に応じて契約書または請書が必要です。';
-                resultContractForm.textContent = contractFormDetail; 
-                flowNote = `（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円を超過しており、かつ特殊事由が選択されていません。）`;
-            }
-
-            // 安全なテキスト設定
-            document.getElementById('resultArticle').textContent = article;
-            
-            // 安全なHTML生成（Markdown風太字対応）
-            const quoteEl = document.getElementById('resultQuotation');
-            quoteEl.innerHTML = ''; 
-            quoteEl.appendChild(createSafeHTML(quotationDetail));
-
-            const notesEl = document.getElementById('resultNotes');
-            notesEl.innerHTML = '';
-            notes.forEach(note => {
-                const p = document.createElement('p');
-                p.appendChild(createSafeHTML(note));
-                notesEl.appendChild(p);
-            });
-
-            document.getElementById('resultFlow').textContent = flowNote;
-
-            // 手順リストの生成
-            const procEl = document.getElementById('resultProcedure');
-            procEl.innerHTML = '';
-            if (office !== '主管課') {
-                // 契約検査課への依頼
-                const div = document.createElement('div');
-                div.className = 'step-item';
-                div.innerHTML = `
-                    <div class="step-number" style="background-color: var(--danger);">1</div>
-                    <div class="step-content">
-                        <p class="step-title" style="color:var(--danger)">契約検査課への依頼</p>
-                        <p class="step-detail">物品契約管理システムに入力し、出力した伺書に必要書類を添付して提出してください。</p>
-                        <p class="step-detail" style="margin-top:4px;">※依頼案件については、「随意契約及び業者選定理由書」の添付は不要です。</p>
-                    </div>
-                `;
-                procEl.appendChild(div);
-            } else {
-                STANDARD_PROCEDURE.forEach((item, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'step-item';
-                    
-                    const numDiv = document.createElement('div');
-                    numDiv.className = 'step-number';
-                    numDiv.textContent = index + 1;
-                    
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'step-content';
-                    
-                    const titleP = document.createElement('p');
-                    titleP.className = 'step-title';
-                    titleP.textContent = item.step;
-                    
-                    const detailP = document.createElement('p');
-                    detailP.className = 'step-detail';
-                    detailP.appendChild(createSafeHTML(item.detail));
-                    
-                    contentDiv.appendChild(titleP);
-                    contentDiv.appendChild(detailP);
-                    div.appendChild(numDiv);
-                    div.appendChild(contentDiv);
-                    procEl.appendChild(div);
-                });
-            }
-
-            // 結果表示
-            const output = document.getElementById('resultOutput');
-            output.classList.remove('hidden');
-            output.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // イベントリスナー登録 (インラインイベントの廃止)
-        document.addEventListener('DOMContentLoaded', () => {
-            // Service Worker登録
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered'))
-                    .catch(err => console.error('SW failed', err));
-            }
-
-            // PWAインストールボタン
-            let deferredPrompt;
-            const installBtnContainer = document.getElementById('installBtnContainer');
-            const installBtn = document.getElementById('installBtn');
-
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                installBtnContainer.style.display = 'block';
-            });
-
-            installBtn.addEventListener('click', async () => {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                installBtnContainer.style.display = 'none';
-            });
-
-            // UIイベント
-            document.getElementById('plannedPrice').addEventListener('input', (e) => updatePricePreview(e.target.value));
-            document.getElementById('plannedPrice').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); judgeContract(); }
-            });
-            document.getElementById('judgeBtn').addEventListener('click', judgeContract);
-            document.getElementById('clearBtn').addEventListener('click', (e) => {
-                e.preventDefault(); resetForm();
-            });
-            document.getElementById('resetBtn').addEventListener('click', resetForm);
-            document.getElementById('printBtn').addEventListener('click', () => window.print());
-        });
-    </script>
 </body>
 </html>
