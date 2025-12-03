@@ -1,0 +1,21 @@
+{
+  "name": "あなたのPWAアプリ名 (変更してください)",
+  "short_name": "随契判定ナビ",
+  "description": "このアプリの説明を記述してください。",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#9333ea",
+  "theme_color": "#9333ea"
+}
