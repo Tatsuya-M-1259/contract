@@ -1,14 +1,18 @@
-// キャッシュ名 (更新時はバージョンを上げる: v1 -> v2)
+// キャッシュ名 (ファイルを更新したら、このバージョンをv2, v3...と上げて反映させます)
 const CACHE_NAME = 'contract-guide-v2';
+
+// キャッシュするファイル一式
 const ASSETS = [
     './',
     './index.html',
+    './style.css',
+    './script.js',
     './manifest.json',
     './icon-192x192.png',
     './icon-512x512.png'
 ];
 
-// インストール
+// インストール処理
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -16,11 +20,12 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// フェッチ (オフライン対応)
+// 通信処理（オフライン対応）
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
+                // キャッシュがあればそれを返す、なければ通信する
                 return response || fetch(event.request);
             })
     );
