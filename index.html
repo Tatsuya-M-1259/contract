@@ -82,13 +82,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="plannedPrice">2. 予定価格 (税込・単位: 万円)</label>
+                        <label for="plannedPrice">2. 予定価格 (税込・単位: <strong>千円</strong>)</label>
                         <div class="input-group">
-                            <input type="number" id="plannedPrice" min="0" placeholder="例: 165">
-                            <span class="input-unit">万円</span>
+                            <input type="number" id="plannedPrice" min="0" placeholder="例: 1650" inputmode="numeric">
+                            <span class="input-unit">千円</span>
                         </div>
                         <div id="pricePreview" class="price-preview">0 円</div>
-                        <p class="input-note">※「165万円」の場合は「165」と入力してください。<span class="text-red">判定は税込額で行われます。</span></p>
+                        <p class="input-note">※「165万円」の場合は<strong>「1650」</strong>と入力してください。<br>※<span class="text-red">税込金額</span>で入力してください。</p>
                     </div>
 
                     <div class="form-group">
@@ -99,7 +99,7 @@
                                     <input id="reasonNone" name="specialReason" type="radio" value="0" checked>
                                     <span class="radio-card-content">
                                         <span class="radio-card-title">該当なし</span>
-                                        <span class="radio-card-desc">特殊な事由はなく、価格のみで判定します。</span>
+                                        <span class="radio-card-desc">特殊な事由はなく、価格要件（少額随契）のみで判定します。</span>
                                     </span>
                                 </label>
                                 
@@ -107,7 +107,7 @@
                                     <input id="reason2" name="specialReason" type="radio" value="2">
                                     <span class="radio-card-content">
                                         <span class="radio-card-title">第2号: 性質・目的が競争に適しない</span>
-                                        <span class="radio-card-desc">不動産、特殊技術、特許権など。</span>
+                                        <span class="radio-card-desc">不動産の特定物件、特殊技術、特許権など。</span>
                                     </span>
                                 </label>
 
@@ -115,7 +115,7 @@
                                     <input id="reason3" name="specialReason" type="radio" value="3">
                                     <span class="radio-card-content">
                                         <span class="radio-card-title">第3号: 福祉施設等</span>
-                                        <span class="radio-card-desc">障害者支援施設、シルバー人材センター等。</span>
+                                        <span class="radio-card-desc">障害者支援施設、シルバー人材センター等からの購入。</span>
                                     </span>
                                 </label>
 
