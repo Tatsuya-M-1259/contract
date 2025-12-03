@@ -15,13 +15,10 @@
     <meta name="apple-mobile-web-app-title" content="随契判定">
     <meta name="theme-color" content="#10B981">
     
-    <!-- 【セキュリティ強化】CSP設定: 外部読込禁止、インラインスクリプト禁止 -->
+    <!-- CSP設定 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;">
 
-    <!-- スタイルシートの読み込み -->
     <link rel="stylesheet" href="./style.css">
-    
-    <!-- プログラムの読み込み (defer属性でHTML解析後に実行) -->
     <script src="./script.js" defer></script>
 </head>
 <body>
@@ -33,7 +30,6 @@
                 本アプリは、一般競争入札の原則に対する<span class="highlight-red">例外規定（随意契約）</span>の<span class="underline">適正な判断と手続き</span>をサポートします。
             </p>
             
-            <!-- インストールボタン (初期状態は非表示) -->
             <div id="installBtnContainer" class="install-btn-wrapper hidden">
                 <button id="installBtn" class="install-btn">
                     <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +40,6 @@
             </div>
         </header>
 
-        <!-- 注意喚起バナー -->
         <div class="warning-banner">
             <svg class="warning-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -54,9 +49,7 @@
             </div>
         </div>
 
-        <!-- メイングリッド -->
         <div class="grid">
-
             <!-- 入力エリア -->
             <div class="card">
                 <div class="card-header">
@@ -81,30 +74,32 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="plannedPrice">2. 予定価格 (税抜・単位: 万円)</label>
+                        <label for="plannedPrice">2. 予定価格 (税込・単位: 万円)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="plannedPrice" min="0" placeholder="例: 150">
+                            <input type="number" id="plannedPrice" min="0" placeholder="例: 165">
                             <div id="pricePreview" class="price-preview">0 円</div>
                         </div>
-                        <p class="input-note">※「100万円」の場合は「100」と入力してください</p>
+                        <p class="input-note">※「165万円」の場合は「165」と入力してください。<span class="text-red">判定は税込額で行われます。</span></p>
                     </div>
 
                     <div class="form-group">
-                        <label>3. 特殊な契約事由 (該当する場合)</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input id="reasonNone" name="specialReason" type="radio" value="0" checked>
-                                <label for="reasonNone"><strong>該当する特殊事由はない</strong> (価格のみで判定)</label>
+                        <fieldset class="radio-group-container">
+                            <legend class="legend-label">3. 特殊な契約事由 (該当する場合)</legend>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input id="reasonNone" name="specialReason" type="radio" value="0" checked>
+                                    <label for="reasonNone"><strong>該当する特殊事由はない</strong> (価格のみで判定)</label>
+                                </div>
+                                <hr class="radio-divider">
+                                <div class="radio-item"><input id="reason2" name="specialReason" type="radio" value="2"><label for="reason2">第2号: 性質・目的が競争入札に適しない (特殊技術等)</label></div>
+                                <div class="radio-item"><input id="reason3" name="specialReason" type="radio" value="3"><label for="reason3">第3号: 福祉施設等 (障害者支援施設等)</label></div>
+                                <div class="radio-item"><input id="reason5" name="specialReason" type="radio" value="5"><label for="reason5">第5号: 緊急の必要 (災害等)</label></div>
+                                <div class="radio-item"><input id="reason6" name="specialReason" type="radio" value="6"><label for="reason6">第6号: 競争入札が不利 (追加工事等)</label></div>
+                                <div class="radio-item"><input id="reason7" name="specialReason" type="radio" value="7"><label for="reason7">第7号: 時価に比べて著しく有利な価格</label></div>
+                                <div class="radio-item"><input id="reason8" name="specialReason" type="radio" value="8"><label for="reason8">第8号: 入札不調</label></div>
+                                <div class="radio-item"><input id="reason9" name="specialReason" type="radio" value="9"><label for="reason9">第9号: 落札者辞退</label></div>
                             </div>
-                            <hr class="radio-divider">
-                            <div class="radio-item"><input id="reason2" name="specialReason" type="radio" value="2"><label for="reason2">第2号: 性質・目的が競争入札に適しない (特殊技術等)</label></div>
-                            <div class="radio-item"><input id="reason3" name="specialReason" type="radio" value="3"><label for="reason3">第3号: 福祉施設等 (障害者支援施設等)</label></div>
-                            <div class="radio-item"><input id="reason5" name="specialReason" type="radio" value="5"><label for="reason5">第5号: 緊急の必要 (災害等)</label></div>
-                            <div class="radio-item"><input id="reason6" name="specialReason" type="radio" value="6"><label for="reason6">第6号: 競争入札が不利 (追加工事等)</label></div>
-                            <div class="radio-item"><input id="reason7" name="specialReason" type="radio" value="7"><label for="reason7">第7号: 時価に比べて著しく有利な価格</label></div>
-                            <div class="radio-item"><input id="reason8" name="specialReason" type="radio" value="8"><label for="reason8">第8号: 入札不調</label></div>
-                            <div class="radio-item"><input id="reason9" name="specialReason" type="radio" value="9"><label for="reason9">第9号: 落札者辞退</label></div>
-                        </div>
+                        </fieldset>
                     </div>
 
                     <div class="btn-group">
@@ -123,6 +118,9 @@
                         印刷
                     </button>
                 </div>
+
+                <!-- 印刷用の入力情報サマリー -->
+                <div id="inputSummary" class="input-summary hidden"></div>
                 
                 <div class="result-section">
                     <div class="section-label">事務担当部署</div>
@@ -160,7 +158,6 @@
                     <p id="resultFlow" class="text-italic"></p>
                 </div>
             </div>
-
         </div>
     </div>
 </body>
