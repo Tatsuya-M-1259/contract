@@ -5,21 +5,24 @@
  */
 
 const CONFIG = {
-    // 随意契約の金額上限 (施行令第167条の2第1項第1号、規則第15条) - 税込金額で判定
+    // 随意契約の金額上限 (施行令第167条の2第1項第1号、規則第15条) 
+    // ※単位: 千円 (税込)
+    // ※ユーザー指定により、旧基準または独自基準（工事製造200万円等）を適用
     PRICE_LIMITS: {
-        '1': 200, // 工事又は製造の請負
-        '2': 150, // 財産の買入れ
-        '3': 80,  // 物件の借入れ
-        '4': 50,  // 財産の売払い
-        '5': 30,  // 物件の貸付け
-        '6': 100  // 前各号に掲げる以外のもの
+        '1': 2000, // 工事又は製造の請負 (200万円)
+        '2': 1500, // 財産の買入れ (150万円)
+        '3': 800,  // 物件の借入れ (80万円)
+        '4': 500,  // 財産の売払い (50万円)
+        '5': 300,  // 物件の貸付け (30万円)
+        '6': 1000  // 前各号に掲げる以外のもの (100万円)
     },
-    // 契約検査課への依頼基準金額 (万円)
+    // 契約検査課への依頼基準金額 
+    // ※単位: 千円 (税込)
     OFFICE_THRESHOLDS: {
-        CONSTRUCTION: 20,
-        GOODS: 20,
-        RENTAL: 20,
-        SERVICE: 50
+        CONSTRUCTION: 200, // 工事・製造等 (20万円超)
+        GOODS: 200,        // 物品購入 (20万円超)
+        RENTAL: 200,       // 借入れ (20万円超)
+        SERVICE: 500       // 委託等 (50万円超)
     }
 };
 
@@ -65,27 +68,29 @@ function createSafeHTML(markdownText) {
     return span;
 }
 
+// 単位: 千円 -> 円 変換表示
 function updatePricePreview(val) {
     const previewEl = document.getElementById('pricePreview');
     if (!val || val === '') { previewEl.textContent = "0 円"; return; }
-    const yen = parseFloat(val) * 10000;
+    
+    // 入力値(千円) × 1000
+    const yen = parseFloat(val) * 1000;
+    
     if (isNaN(yen)) { previewEl.textContent = "数値エラー"; } 
-    else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円"; }
+    else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円 (税込)"; }
 }
 
-// エラーメッセージの表示・非表示
+// エラーメッセージの表示
 function showError(message, elementIdToFocus) {
     const errorContainer = document.getElementById('errorContainer');
     const errorMessage = document.getElementById('errorMessage');
     errorMessage.textContent = message;
     errorContainer.classList.remove('hidden');
     
-    // エラー箇所へスクロール
     if (elementIdToFocus) {
         const target = document.getElementById(elementIdToFocus);
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         target.focus();
-        // 視覚的な強調（一時的に赤枠など）
         target.style.outline = "2px solid #EF4444";
         setTimeout(() => { target.style.outline = ""; }, 2000);
     } else {
@@ -109,7 +114,9 @@ function resetForm() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// 担当部署の判定 (千円単位で比較)
 function determineContractOffice(type, price, specialReason) {
+    // 特定随契（相手方が決まっているもの）は主管課処理が原則
     const isOneParty = ['2', '3', '5', '6'].includes(specialReason);
     if (isOneParty) return '主管課';
 
@@ -124,19 +131,20 @@ function determineContractOffice(type, price, specialReason) {
 }
 
 function judgeContract() {
-    hideError(); // 判定前にエラーをクリア
+    hideError();
 
     const contractType = document.getElementById('contractType').value;
-    const priceMan = parseFloat(document.getElementById('plannedPrice').value);
+    // 入力は千円単位
+    const priceInput = parseFloat(document.getElementById('plannedPrice').value);
     const specialReasonElement = document.querySelector('input[name="specialReason"]:checked');
     const specialReason = specialReasonElement ? specialReasonElement.value : '0';
     
-    // バリデーション (alert廃止)
+    // バリデーション
     if (!contractType) {
         showError('「契約の種類」を選択してください。', 'contractType');
         return;
     }
-    if (isNaN(priceMan) || priceMan < 0 || document.getElementById('plannedPrice').value === "") {
+    if (isNaN(priceInput) || priceInput < 0 || document.getElementById('plannedPrice').value === "") {
         showError('「予定価格」を正しく入力してください。', 'plannedPrice');
         return;
     }
@@ -152,7 +160,7 @@ function judgeContract() {
     }
     summaryEl.innerHTML = `
         <div><strong>契約の種類:</strong> ${typeName}</div>
-        <div><strong>予定価格:</strong> ${priceMan}万円 (税込)</div>
+        <div><strong>予定価格:</strong> ${priceInput.toLocaleString()}千円 (税込)</div>
         <div><strong>選択理由:</strong> ${reasonName}</div>
     `;
     summaryEl.classList.remove('hidden');
@@ -160,7 +168,7 @@ function judgeContract() {
 
     let article = '', quotationDetail = '', notes = [], flowNote = '', contractFormDetail = ''; 
     
-    const office = determineContractOffice(contractType, priceMan, specialReason);
+    const office = determineContractOffice(contractType, priceInput, specialReason);
     const resultOfficeDiv = document.getElementById('resultOffice');
     const resultOfficeNormalDiv = document.getElementById('resultOfficeNormal');
     
@@ -174,14 +182,15 @@ function judgeContract() {
         resultOfficeNormalDiv.classList.remove('hidden');
     }
 
-    // 契約形式判定
+    // 契約形式判定 (千円単位: 50万円=500, 20万円=200)
     const resultContractForm = document.getElementById('resultContractForm');
     resultContractForm.className = 'result-text-lg';
-    if (priceMan > 50) {
+    
+    if (priceInput > 500) { // 500千円(50万円)超
         contractFormDetail = '【契約書が必要】(50万円超)';
         resultContractForm.classList.add('text-red');
         notes.push('**【契約締結形式】** 契約書が必要です。落札決定後速やかに契約書(案)を作成し、契約締結すること。');
-    } else if (priceMan > 20) {
+    } else if (priceInput > 200) { // 200千円(20万円)超
         contractFormDetail = '【請書が必要】(20万円超50万円以内)';
         resultContractForm.classList.add('text-orange');
         notes.push('**【契約締結形式】** 請書(案)を作成し、契約締結すること。');
@@ -193,11 +202,21 @@ function judgeContract() {
     resultContractForm.textContent = contractFormDetail;
 
     const priceLimit = CONFIG.PRICE_LIMITS[contractType];
-    const isMinorContract = priceMan <= priceLimit;
+    // undefinedチェック
+    if (!priceLimit) {
+        showError('契約区分の設定エラーです。', 'contractType');
+        return;
+    }
+
+    const isMinorContract = priceInput <= priceLimit;
     
     if (isMinorContract) {
-        article = `施行令第167条の2第1項第1号 (少額随契 - 上限${priceLimit}万円)`;
-        if (priceMan <= 10) {
+        // 限度額表示 (万円換算)
+        const limitDisp = (priceLimit / 10000) >= 1 ? `${priceLimit/10}万円` : `${priceLimit/10}万円`;
+        article = `施行令第167条の2第1項第1号 (少額随契 - 上限${limitDisp})`;
+        
+        // 少額特例: 10万円以下 (100千円)
+        if (priceInput <= 100) {
             quotationDetail = '原則として1者のみの徴取で足りる (規則第14条第1項第3号)';
         } else if (['7','8','9'].includes(specialReason)) {
             quotationDetail = '原則として2者以上の徴取が必要 (特殊事由により競争性を確保)';
@@ -206,18 +225,20 @@ function judgeContract() {
             quotationDetail = '原則として2者以上の徴取が必要';
         }
         
-        if (priceMan <= 50) notes.push('予定価格調書の作成は省略可能 (50万円以下)');
+        // 予定価格調書: 50万円以下 (500千円) は省略可
+        if (priceInput <= 500) notes.push('予定価格調書の作成は省略可能 (50万円以下)');
         else notes.push('予定価格調書を作成すること (50万円超)');
         
-        if (priceMan <= priceLimit && priceMan > 10 && specialReason === '0' && quotationDetail.includes('2者以上')) {
+        // 理由書不要の条件 (限度額内 かつ 10万円超 かつ 特殊事由なし)
+        if (priceInput <= priceLimit && priceInput > 100 && specialReason === '0' && quotationDetail.includes('2者以上')) {
             notes.push('見積予定業者が複数で、執行伺書に根拠条文と見積予定業者(複数者)の記載があれば、理由書の添付は**不要**です。');
         } else if (specialReason !== '0') {
             notes.push('【特殊事由あり】第1号優先適用ですが、特殊事由が重なる場合は「随意契約及び業者選定理由書」を作成添付し、業者選定理由を明確にすること。');
             if (specialReason === '3') notes.push('**【重要】第3号(福祉施設等)の公表手続きが必要です。**');
-        } else if (priceMan <= 10) {
+        } else if (priceInput <= 100) {
             notes.push('1者随契で処理する場合、業者選定理由等を執行伺書に記載してください。');
         }
-        flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円以下）`;
+        flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceInput}千円は上限額 ${priceLimit}千円以下）`;
 
     } else if (specialReason !== '0') {
         const detail = REASON_DETAILS[specialReason];
@@ -231,7 +252,7 @@ function judgeContract() {
         notes.push(detail.notes);
         notes.push(detail.document);
         notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
-        flowNote = `（予定価格 ${priceMan}万円は第1号の上限額 ${priceLimit}万円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
+        flowNote = `（予定価格 ${priceInput}千円は第1号の上限額 ${priceLimit}千円を超過しています。特殊事由（第${specialReason}号）が適用されました。）`;
     } else {
         article = '随意契約の適用不可';
         quotationDetail = '一般競争入札又は指名競争入札が必要です。';
@@ -239,7 +260,7 @@ function judgeContract() {
         notes.push('価格が50万円を超えているため、予定価格調書の作成は必須です。');
         contractFormDetail = '入札により、落札金額に応じて契約書または請書が必要です。';
         resultContractForm.textContent = contractFormDetail; 
-        flowNote = `（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円を超過しており、かつ特殊事由が選択されていません。）`;
+        flowNote = `（予定価格 ${priceInput}千円は上限額 ${priceLimit}千円を超過しており、かつ特殊事由が選択されていません。）`;
     }
 
     document.getElementById('resultArticle').textContent = article;
@@ -276,22 +297,17 @@ function judgeContract() {
         STANDARD_PROCEDURE.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'step-item';
-            
             const numDiv = document.createElement('div');
             numDiv.className = 'step-number';
             numDiv.textContent = index + 1;
-            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'step-content';
-            
             const titleP = document.createElement('p');
             titleP.className = 'step-title';
             titleP.textContent = item.step;
-            
             const detailP = document.createElement('p');
             detailP.className = 'step-detail';
             detailP.appendChild(createSafeHTML(item.detail));
-            
             contentDiv.appendChild(titleP);
             contentDiv.appendChild(detailP);
             div.appendChild(numDiv);
@@ -330,10 +346,17 @@ document.addEventListener('DOMContentLoaded', () => {
         installBtnContainer.classList.add('hidden');
     });
 
-    document.getElementById('plannedPrice').addEventListener('input', (e) => updatePricePreview(e.target.value));
-    document.getElementById('plannedPrice').addEventListener('keypress', (e) => {
+    // 入力補助：フォーカス時に全選択
+    const priceInput = document.getElementById('plannedPrice');
+    priceInput.addEventListener('focus', function() {
+        this.select();
+    });
+    
+    priceInput.addEventListener('input', (e) => updatePricePreview(e.target.value));
+    priceInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); judgeContract(); }
     });
+    
     document.getElementById('judgeBtn').addEventListener('click', judgeContract);
     document.getElementById('clearBtn').addEventListener('click', (e) => {
         e.preventDefault(); resetForm();
