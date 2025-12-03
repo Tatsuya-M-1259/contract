@@ -87,7 +87,15 @@
                             <input type="number" id="plannedPrice" min="0" placeholder="例: 1650" inputmode="numeric">
                             <span class="input-unit">千円</span>
                         </div>
-                        <div id="pricePreview" class="price-preview">0 円</div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 0.25rem;">
+                            <div id="pricePreview" class="price-preview">0 円</div>
+                            <!-- 桁間違い警告エリア -->
+                            <div id="unitWarning" class="unit-warning hidden">
+                                ⚠️ 単位は千円です
+                            </div>
+                        </div>
+
                         <p class="input-note">※「165万円」の場合は<strong>「1650」</strong>と入力してください。<br>※<span class="text-red">税込金額</span>で入力してください。</p>
                     </div>
 
@@ -172,12 +180,21 @@
             <!-- 結果エリア -->
             <div id="resultOutput" class="card result-box hidden">
                 <div class="card-header">
-                    <h2 class="card-title text-emerald">判定結果と手続き</h2>
-                    <button id="printBtn" class="btn-print no-print">
-                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        印刷
-                    </button>
+                    <h2 class="card-title text-emerald" id="resultTitle">判定結果</h2>
+                    <div class="action-buttons no-print">
+                        <button id="copyBtn" class="btn-icon" title="結果をコピー">
+                            <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            コピー
+                        </button>
+                        <button id="printBtn" class="btn-icon" title="印刷">
+                            <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            印刷
+                        </button>
+                    </div>
                 </div>
+
+                <!-- ステータスバナー（視覚的判定） -->
+                <div id="statusBanner" class="status-banner"></div>
 
                 <!-- 印刷用の入力情報サマリー -->
                 <div id="inputSummary" class="input-summary hidden"></div>
@@ -220,5 +237,8 @@
             </div>
         </div>
     </div>
+    
+    <!-- コピー完了トースト -->
+    <div id="toast" class="toast hidden">コピーしました！</div>
 </body>
 </html>
