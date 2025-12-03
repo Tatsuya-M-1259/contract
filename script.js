@@ -5,7 +5,7 @@
  */
 
 const CONFIG = {
-    // 随意契約の金額上限 (施行令第167条の2第1項第1号、規則第15条)
+    // 随意契約の金額上限 (施行令第167条の2第1項第1号、規則第15条) - 税込金額で判定
     PRICE_LIMITS: {
         '1': 200, // 工事又は製造の請負
         '2': 150, // 財産の買入れ
@@ -16,11 +16,20 @@ const CONFIG = {
     },
     // 契約検査課への依頼基準金額 (万円)
     OFFICE_THRESHOLDS: {
-        CONSTRUCTION: 20, // 印刷物等の製造請負
-        GOODS: 20,        // 物品購入
-        RENTAL: 20,       // 借入れ
-        SERVICE: 50       // 委託等
+        CONSTRUCTION: 20,
+        GOODS: 20,
+        RENTAL: 20,
+        SERVICE: 50
     }
+};
+
+const CONTRACT_TYPE_NAMES = {
+    '1': '工事又は製造の請負',
+    '2': '財産の買入れ',
+    '3': '物件の借入れ',
+    '4': '財産の売払い',
+    '5': '物件の貸付け',
+    '6': '前各号に掲げる以外のもの (委託等)'
 };
 
 const REASON_DETAILS = {
@@ -41,7 +50,6 @@ const STANDARD_PROCEDURE = [
     { step: '契約の締結', detail: '落札決定後速やかに (概ね1週間以内) 契約締結。' }
 ];
 
-// 安全なHTML生成 (太字対応)
 function createSafeHTML(markdownText) {
     const span = document.createElement('span');
     const parts = markdownText.split(/(\*\*.*?\*\*)/g);
@@ -57,7 +65,6 @@ function createSafeHTML(markdownText) {
     return span;
 }
 
-// 金額プレビュー更新
 function updatePricePreview(val) {
     const previewEl = document.getElementById('pricePreview');
     if (!val || val === '') { previewEl.textContent = "0 円"; return; }
@@ -66,20 +73,19 @@ function updatePricePreview(val) {
     else { previewEl.textContent = new Intl.NumberFormat('ja-JP').format(yen) + " 円"; }
 }
 
-// フォームリセット
 function resetForm() {
     document.getElementById('contractType').value = "";
     document.getElementById('plannedPrice').value = "";
     document.getElementById('reasonNone').checked = true;
     updatePricePreview("");
+    // サマリーと結果エリアを隠す
+    document.getElementById('inputSummary').classList.add('hidden');
     document.getElementById('resultOutput').classList.add('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// 事務担当部署の判定
 function determineContractOffice(type, price, specialReason) {
     const isOneParty = ['2', '3', '5', '6'].includes(specialReason);
-    // 特定随契の場合は主管課
     if (isOneParty) return '主管課';
 
     const thresholds = CONFIG.OFFICE_THRESHOLDS;
@@ -92,7 +98,6 @@ function determineContractOffice(type, price, specialReason) {
     return '主管課';
 }
 
-// メイン判定処理
 function judgeContract() {
     const contractType = document.getElementById('contractType').value;
     const priceMan = parseFloat(document.getElementById('plannedPrice').value);
@@ -104,9 +109,26 @@ function judgeContract() {
         return;
     }
 
+    // ------------------------------------------
+    // 印刷用の入力サマリー生成
+    // ------------------------------------------
+    const summaryEl = document.getElementById('inputSummary');
+    const typeName = CONTRACT_TYPE_NAMES[contractType] || '不明';
+    let reasonName = '特になし (価格要件のみ)';
+    if (specialReason !== '0' && REASON_DETAILS[specialReason]) {
+        reasonName = REASON_DETAILS[specialReason].name;
+    }
+    // 表示内容をセットし、非表示クラスを削除
+    summaryEl.innerHTML = `
+        <div><strong>契約の種類:</strong> ${typeName}</div>
+        <div><strong>予定価格:</strong> ${priceMan}万円 (税込)</div>
+        <div><strong>選択理由:</strong> ${reasonName}</div>
+    `;
+    summaryEl.classList.remove('hidden');
+    // ------------------------------------------
+
     let article = '', quotationDetail = '', notes = [], flowNote = '', contractFormDetail = ''; 
     
-    // 部署判定と表示
     const office = determineContractOffice(contractType, priceMan, specialReason);
     const resultOfficeDiv = document.getElementById('resultOffice');
     const resultOfficeNormalDiv = document.getElementById('resultOfficeNormal');
@@ -123,7 +145,7 @@ function judgeContract() {
 
     // 契約形式判定
     const resultContractForm = document.getElementById('resultContractForm');
-    resultContractForm.className = 'result-text-lg'; // クラスリセット
+    resultContractForm.className = 'result-text-lg';
     if (priceMan > 50) {
         contractFormDetail = '【契約書が必要】(50万円超)';
         resultContractForm.classList.add('text-red');
@@ -139,10 +161,8 @@ function judgeContract() {
     }
     resultContractForm.textContent = contractFormDetail;
 
-    // 条文判定
     const priceLimit = CONFIG.PRICE_LIMITS[contractType];
     const isMinorContract = priceMan <= priceLimit;
-    const isSpecialReason = specialReason !== '0';
     
     if (isMinorContract) {
         article = `施行令第167条の2第1項第1号 (少額随契 - 上限${priceLimit}万円)`;
@@ -160,7 +180,7 @@ function judgeContract() {
         
         if (priceMan <= priceLimit && priceMan > 10 && specialReason === '0' && quotationDetail.includes('2者以上')) {
             notes.push('見積予定業者が複数で、執行伺書に根拠条文と見積予定業者(複数者)の記載があれば、理由書の添付は**不要**です。');
-        } else if (isSpecialReason) {
+        } else if (specialReason !== '0') {
             notes.push('【特殊事由あり】第1号優先適用ですが、特殊事由が重なる場合は「随意契約及び業者選定理由書」を作成添付し、業者選定理由を明確にすること。');
             if (specialReason === '3') notes.push('**【重要】第3号(福祉施設等)の公表手続きが必要です。**');
         } else if (priceMan <= 10) {
@@ -168,7 +188,7 @@ function judgeContract() {
         }
         flowNote = `判定は「第1号優先適用」の原則に基づき行われました。（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円以下）`;
 
-    } else if (isSpecialReason) {
+    } else if (specialReason !== '0') {
         const detail = REASON_DETAILS[specialReason];
         article = `施行令第167条の2第1項第${specialReason}号 (${detail.name.split('(')[1].replace(')', '')})`;
         if (detail.oneParty) {
@@ -191,15 +211,12 @@ function judgeContract() {
         flowNote = `（予定価格 ${priceMan}万円は上限額 ${priceLimit}万円を超過しており、かつ特殊事由が選択されていません。）`;
     }
 
-    // 結果の反映
     document.getElementById('resultArticle').textContent = article;
     
-    // 見積要否
     const quoteEl = document.getElementById('resultQuotation');
     quoteEl.innerHTML = ''; 
     quoteEl.appendChild(createSafeHTML(quotationDetail));
 
-    // 注意事項
     const notesEl = document.getElementById('resultNotes');
     notesEl.innerHTML = '';
     notes.forEach(note => {
@@ -210,7 +227,6 @@ function judgeContract() {
 
     document.getElementById('resultFlow').textContent = flowNote;
 
-    // 手順リストの生成
     const procEl = document.getElementById('resultProcedure');
     procEl.innerHTML = '';
     if (office !== '主管課') {
@@ -229,22 +245,17 @@ function judgeContract() {
         STANDARD_PROCEDURE.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'step-item';
-            
             const numDiv = document.createElement('div');
             numDiv.className = 'step-number';
             numDiv.textContent = index + 1;
-            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'step-content';
-            
             const titleP = document.createElement('p');
             titleP.className = 'step-title';
             titleP.textContent = item.step;
-            
             const detailP = document.createElement('p');
             detailP.className = 'step-detail';
             detailP.appendChild(createSafeHTML(item.detail));
-            
             contentDiv.appendChild(titleP);
             contentDiv.appendChild(detailP);
             div.appendChild(numDiv);
@@ -253,22 +264,18 @@ function judgeContract() {
         });
     }
 
-    // 結果表示
     const output = document.getElementById('resultOutput');
     output.classList.remove('hidden');
     output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// 初期化とイベントリスナー設定
 document.addEventListener('DOMContentLoaded', () => {
-    // Service Worker登録
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('SW registered'))
             .catch(err => console.error('SW failed', err));
     }
 
-    // PWAインストールボタン制御
     let deferredPrompt;
     const installBtnContainer = document.getElementById('installBtnContainer');
     const installBtn = document.getElementById('installBtn');
@@ -287,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         installBtnContainer.classList.add('hidden');
     });
 
-    // UIイベントリスナー
     document.getElementById('plannedPrice').addEventListener('input', (e) => updatePricePreview(e.target.value));
     document.getElementById('plannedPrice').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); judgeContract(); }
